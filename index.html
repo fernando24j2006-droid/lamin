@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Karaoke - Famoshinha Mejorado</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --azul:#0d47a1;
+  --rojo:#b71c1c;
+  --fondo-oscuro:rgba(0,0,0,0.25);
+  --gris:#bdbdbd;
+}
+*{box-sizing:border-box;font-family:"Poppins",sans-serif;margin:0;padding:0;}
+html,body{height:100%;background:#000;color:#fff;}
+#karaoke{position:relative;width:100%;height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+#bg-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.75;transition: transform 0.8s ease, opacity 1s ease;z-index:0;}
+#overlay{position:absolute;inset:0;background:var(--fondo-oscuro);backdrop-filter:blur(2px);z-index:1;}
+.card{position:relative;z-index:2;width:min(1024px,96%);background:linear-gradient(180deg, rgba(0,0,0,0.35), rgba(0,0,0,0.2));border-radius:16px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,0.6);display:grid;grid-template-columns:1fr 280px;gap:12px;align-items:center;}
+.panel-letras{padding:10px;display:flex;flex-direction:column;gap:8px;align-items:center;justify-content:center;min-height:180px;}
+.linea{width:100%;max-width:880px;padding:10px 20px;border-radius:10px;text-align:center;backdrop-filter: blur(6px);transition: all 0.3s;}
+.anterior{ font-size:16px; opacity:0.75; background: rgba(0,0,0,0.2); color:var(--gris);}
+.actual{ font-weight:800; font-size:24px; letter-spacing:0.5px; background: rgba(0,0,0,0.25); position:relative; overflow:visible; transition: all 0.3s ease; padding:12px 24px;}
+.siguiente{ font-size:16px; opacity:0.7; background: rgba(0,0,0,0.2); color:var(--gris);}
+.panel-ctrl{padding:8px;display:flex;flex-direction:column;gap:8px;align-items:stretch;justify-content:center;}
+.info{display:flex;gap:8px;align-items:center;}
+.cover{width:60px;height:60px;border-radius:6px;background-size:cover;background-position:center;box-shadow:0 5px 12px rgba(0,0,0,0.5);flex-shrink:0;transition: all 0.8s ease;}
+.meta{display:flex;flex-direction:column;gap:2px;}
+.titulo{ font-weight:700; font-size:14px; color:var(--rojo);}
+.sub{ font-size:11px; color:var(--gris); opacity:0.95;}
+.controles{display:flex;gap:6px;align-items:center;justify-content:space-between;}
+.left-controls{display:flex; gap:6px; align-items:center;}
+.btn{background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border: 1px solid rgba(255,255,255,0.05); padding:6px; border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:4px; user-select:none; color:#fff; font-weight:600; transition: all 0.2s ease; font-size:12px;}
+.btn:hover{transform:translateY(-1px); box-shadow:0 3px 10px rgba(0,0,0,0.3);}
+.play-btn{width:48px; height:48px; border-radius:10px; background: var(--azul); font-size:16px; color:#fff;}
+.btn-azul{background: var(--azul);}
+.btn-rojo{background: var(--rojo);}
+.progress-wrap{flex:1; margin:0 4px; display:flex; align-items:center; gap:6px;}
+.time{width:40px; text-align:center; font-size:11px; color:var(--gris);}
+.progress{position:relative; height:8px; background: rgba(255,255,255,0.06); border-radius:999px; flex:1; cursor:pointer; overflow:hidden;}
+.progress .filled{position:absolute; left:0; top:0; bottom:0; width:0%; background: linear-gradient(90deg,var(--azul),var(--rojo)); border-radius:999px; transition: width 0.12s linear;}
+input[type="range"]{-webkit-appearance:none; width:70px; height:4px; border-radius:6px; background:rgba(255,255,255,0.06);}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none; width:10px; height:10px; border-radius:50%; background:var(--azul);}
+@media(max-width:980px){.card{ grid-template-columns:1fr; gap:12px; padding:12px;} .panel-ctrl{ order:2 } .panel-letras{ order:1 } .cover{ display:none }}
+</style>
+</head>
+<body>
+<div id="karaoke">
+  <img id="bg-img" src="fondo_Famoshinha.jpg" alt="Fondo karaoke">
+  <div id="overlay"></div>
+  <div class="card" role="region" aria-label="Reproductor karaoke">
+    <div class="panel-letras">
+      <div id="lineaAnterior" class="linea anterior"></div>
+      <div id="lineaActual" class="linea actual">Cargando letras…</div>
+      <div id="lineaSiguiente" class="linea siguiente"></div>
+    </div>
+    <div class="panel-ctrl">
+      <div class="info">
+        <div id="cover" class="cover" style="background-image:url('fondo_Famoshinha.jpg')"></div>
+        <div class="meta">
+          <div class="titulo">Famoshinha</div>
+          <div class="sub">Part. MC Meno K e MC Rodrigo do CN, Dj Caio Vieira</div>
+        </div>
+      </div>
+      <div class="controles">
+        <div class="left-controls">
+          <button id="rewindBtn" class="btn btn-rojo">« 5s</button>
+          <button id="playBtn" class="btn play-btn">►</button>
+          <button id="forwardBtn" class="btn btn-azul">5s »</button>
+          <div class="progress-wrap">
+            <div id="timeCurrent" class="time">0:00</div>
+            <div id="progress" class="progress">
+              <div class="filled"></div>
+            </div>
+            <div id="timeTotal" class="time">0:00</div>
+          </div>
+        </div>
+        <div class="right-controls" style="display:flex; gap:6px; align-items:center;">
+          <input id="vol" type="range" min="0" max="1" step="0.01" value="1"/>
+          <button id="muteBtn" class="btn btn-azul">🔊</button>
+          <div id="speedBtn" class="btn btn-rojo">1x</div>
+        </div>
+      </div>
+      <div style="margin-top:6px; display:flex; justify-content:space-between;">
+        <a href="Famoshinha.Irc" id="downloadLrc" class="btn btn-azul" download>LRC</a>
+        <a href="Famoshinha.mp3" id="downloadMp3" class="btn btn-rojo" download>MP3</a>
+      </div>
+    </div>
+  </div>
+  <audio id="audio" src="Famoshinha.mp3" preload="auto"></audio>
+</div>
+
+<script>
+const fondos = ['fondo_Famoshinha.jpg','fondo_Famoshinha1.jpg','fondo_Famoshinha2.jpg','fondo_Famoshinha3.jpg','fondo_Famoshinha4.jpg','fondo_Famoshinha5.jpg'];
+const audio = document.getElementById('audio');
+const playBtn = document.getElementById('playBtn');
+const forwardBtn = document.getElementById('forwardBtn');
+const rewindBtn = document.getElementById('rewindBtn');
+const vol = document.getElementById('vol');
+const muteBtn = document.getElementById('muteBtn');
+const speedBtn = document.getElementById('speedBtn');
+const lineaAnterior = document.getElementById('lineaAnterior');
+const lineaActual = document.getElementById('lineaActual');
+const lineaSiguiente = document.getElementById('lineaSiguiente');
+const bgImg = document.getElementById('bg-img');
+const cover = document.getElementById('cover');
+const progress = document.getElementById('progress');
+const filled = progress.querySelector('.filled');
+const timeCurrent = document.getElementById('timeCurrent');
+const timeTotal = document.getElementById('timeTotal');
+
+let letras=[],indice=0,bgIndex=-1,speed=1,isSeeking=false;
+
+async function cargarLRC(){
+  try{
+    const resp = await fetch('Famoshinha.Irc');
+    const txt = await resp.text();
+    const lines = txt.split(/\r?\n/);
+    const arr=[];
+    const patron=/\[(\d+):(\d+)[.:](\d+)\](.*)/;
+    for(const ln of lines){
+      const m = ln.match(patron);
+      if(m){arr.push({tiempo: parseInt(m[1])*60+parseInt(m[2])+parseInt(m[3])/100,texto:m[4].trim()});}
+    }
+    arr.sort((a,b)=>a.tiempo-b.tiempo);
+    return arr;
+  }catch(e){console.error('No se pudo cargar LRC',e); return [];}
+}
+
+(async function init(){
+  letras = await cargarLRC();
+  if(letras.length===0){lineaActual.textContent="No hay letras sincronizadas.";}
+  else{lineaActual.textContent=letras[0].texto; lineaAnterior.textContent=""; lineaSiguiente.textContent=letras[1]?.texto||"";}
+})();
+
+function fmt(s){ if(!isFinite(s)||s===null) return "0:00"; const m=Math.floor(s/60), sec=Math.floor(s%60).toString().padStart(2,'0'); return `${m}:${sec}`;}
+function togglePlay(){ audio.paused?audio.play():audio.pause();}
+playBtn.addEventListener('click',togglePlay);
+audio.addEventListener('play',()=>playBtn.textContent='❚❚');
+audio.addEventListener('pause',()=>playBtn.textContent='►');
+forwardBtn.addEventListener('click',()=>audio.currentTime=Math.min(audio.duration,audio.currentTime+5));
+rewindBtn.addEventListener('click',()=>audio.currentTime=Math.max(0,audio.currentTime-5));
+
+progress.addEventListener('click',e=>seek(e));
+progress.addEventListener('pointerdown',e=>{isSeeking=true; seek(e); progress.setPointerCapture(e.pointerId);});
+progress.addEventListener('pointermove',e=>{if(isSeeking) seek(e);});
+progress.addEventListener('pointerup',e=>{isSeeking=false; try{progress.releasePointerCapture(e.pointerId);}catch{};});
+
+function seek(e){ const rect=progress.getBoundingClientRect(); const x=(e.touches?e.touches[0].clientX:e.clientX)-rect.left; const pct=Math.max(0,Math.min(1,x/rect.width)); audio.currentTime=(audio.duration||0)*pct; filled.style.width=(pct*100)+'%';}
+
+vol.addEventListener('input',()=>audio.volume=parseFloat(vol.value));
+muteBtn.addEventListener('click',()=>{
+  if(audio.muted||audio.volume===0){audio.muted=false; vol.value=audio.volume||1; muteBtn.textContent='🔊';}
+  else{audio.muted=true; muteBtn.textContent='🔈'; vol.value=0;}
+});
+speedBtn.addEventListener('click',()=>{
+  const ops=[1,1.25,1.5,1.75,2]; let idx=ops.indexOf(speed);
+  speed=ops[(idx+1)%ops.length]; audio.playbackRate=speed; speedBtn.textContent=speed+'x';
+});
+
+audio.addEventListener('timeupdate',()=>{
+  const t=audio.currentTime;
+  if(!isSeeking){filled.style.width=((t/(audio.duration||1))*100)+'%';}
+  timeCurrent.textContent=fmt(t); timeTotal.textContent=fmt(audio.duration);
+  if(letras.length){
+    if(t<letras[0].tiempo) indice=0;
+    while(indice<letras.length-1&&t>=letras[indice+1].tiempo) indice++;
+    while(indice>0&&t<letras[indice].tiempo) indice--;
+    
+    const colorActual = (indice%2===0)?'var(--azul)':'var(--rojo)';
+    lineaActual.style.color=colorActual;
+    lineaAnterior.style.color='var(--gris)';
+    lineaSiguiente.style.color='var(--gris)';
+    
+    lineaActual.textContent=letras[indice]?.texto||"";
+    lineaAnterior.textContent=letras[indice-1]?.texto||"";
+    lineaSiguiente.textContent=letras[indice+1]?.texto||"";
+
+    const total=fondos.length;
+    const newIndex=Math.floor((indice/letras.length)*total);
+    if(newIndex!==bgIndex){
+      bgIndex=newIndex;
+      bgImg.src=fondos[bgIndex];
+      cover.style.backgroundImage=`url('${fondos[bgIndex]}')`;
+      bgImg.style.transform='scale(1.08)';
+      cover.style.transform='scale(1.05)';
+      setTimeout(()=>{bgImg.style.transform='scale(1)'; cover.style.transform='scale(1)';},700);
+    }
+  }
+});
+
+window.addEventListener('keydown',e=>{
+  if(e.code==='Space' && document.activeElement.tagName!=='INPUT'){e.preventDefault(); togglePlay();}
+});
+</script>
+</body>
+</html>
+
